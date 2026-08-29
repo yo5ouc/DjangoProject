@@ -15,7 +15,7 @@ User = get_user_model()
 
 # Change these to the username and password you want!
 username = 'admin'
-password = 'dfrt54DFG342**&;.,hgfrte'
+password = 'secret-password-used'
 email = 'yo5ouc@gmail.com'
 
 if not User.objects.filter(username=username).exists():
