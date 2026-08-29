@@ -1,5 +1,9 @@
 import os
+import sys
 import django
+
+# Tell Python to look in the current root folder for modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Setup Django configuration
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
