@@ -2,231 +2,141 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FT-857D Transceiver Dashboard Control Panel</title>
+    <title>FT-857D Station Console</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #121212;
-            color: #ffffff;
-            padding: 20px;
-            text-align: center;
-        }
-        .console-container {
-            max-width: 700px;
-            margin: 0 auto;
-            background: #1a1a1a;
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        .display-box {
-            background: #222;
-            border: 2px solid #00ff00;
-            border-radius: 8px;
-            display: inline-block;
-            padding: 20px;
-            margin-bottom: 20px;
-            font-family: 'Courier New', Courier, monospace;
-            min-width: 320px;
-        }
-        .freq {
-            font-size: 36px;
-            color: #00ff00;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        .mode-indicator {
-            font-weight: bold;
-            padding: 5px 12px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 14px;
-        }
-        .mode-rx {
-            background: #198754;
-            color: white;
-        }
-        .mode-tx {
-            background: #dc3545;
-            color: white;
-        }
+        body { font-family: 'Arial', sans-serif; background: #e9ecef; color: #333; padding: 20px; text-align: center; }
 
-        .control-row {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 15px 0 25px 0;
-        }
-        .shift-btn {
-            background: #212529;
-            border: 1px solid #495057;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: bold;
-        }
-        .shift-btn:hover {
-            background: #343a40;
-            border-color: #ffc107;
-        }
+        /* 🎛️ Band Row Bar Container (Top) */
+        .top-band-row { display: flex; gap: 4px; justify-content: center; margin-bottom: 10px; max-width: 900px; margin: 0 auto 10px auto; flex-wrap: wrap; }
+        .band-pill { background: #ced4da; border: 1px solid #adb5bd; border-radius: 4px; padding: 4px 8px; font-size: 13px; font-weight: bold; color: #495057; cursor: pointer; }
+        .band-pill:hover { background: #6c757d; color: white; }
 
-        .meter-container {
-            background: #222;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            text-align: left;
-            margin-bottom: 25px;
-        }
-        .meter-label {
-            font-size: 13px;
-            font-family: monospace;
-            margin-bottom: 4px;
-            color: #aaa;
-            font-weight: bold;
-        }
-        .meter-bg {
-            background: #333;
-            width: 100%;
-            height: 14px;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-        .meter-bar {
-            height: 100%;
-            width: 0%;
-            transition: width 0.2s ease;
-        }
-        .smeter-bar { background: #0d6efd; }
-        .tx-bar { background: #dc3545; }
-        .alc-bar { background: #ffc107; }
+        /* 🟨 The Main Bezel Rig Body Frame */
+        .rig-body { background: #ffcc00; max-width: 820px; margin: 0 auto; border-radius: 8px; border: 3px solid #cca300; padding: 20px; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
-            margin-top: 15px;
-        }
-        .band-btn {
-            background: #2b3035;
-            border: 1px solid #495057;
-            color: #ffffff;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 15px;
-            cursor: pointer;
-            font-family: monospace;
-            transition: all 0.2s ease;
-        }
-        .band-btn:hover {
-            background: #0d6efd;
-            border-color: #0d6efd;
-            box-shadow: 0 0 8px rgba(13, 110, 253, 0.4);
-        }
+        /* 📟 Horizontal Mode Bar Row */
+        .mode-row { display: flex; gap: 6px; justify-content: center; background: #ffffff; padding: 8px; border-radius: 6px; margin-bottom: 15px; }
+        .mode-btn { background: #e9ecef; border: 1px solid #ced4da; border-radius: 4px; padding: 4px 12px; font-weight: bold; color: #495057; cursor: pointer; }
+        .mode-btn.active { background: #6c757d; color: white; }
+
+        /* 📊 Classic Horizontal Line Combined Meter Panel */
+        .meter-panel { background: #ffffff; border-radius: 6px; padding: 8px 15px; text-align: left; font-family: monospace; font-size: 11px; font-weight: bold; margin-bottom: 15px; position: relative; }
+        .meter-line-row { display: flex; gap: 30px; margin-bottom: 4px; }
+        .meter-track { background: #e9ecef; width: 100%; height: 6px; border-radius: 2px; position: relative; margin-top: 2px; overflow: hidden; }
+        .meter-fill { background: #007bff; height: 100%; width: 15%; transition: width 0.15s ease; }
+
+        /* 🎚️ RF Power Slider Controls Wrapper */
+        .slider-panel { background: #ffffff; padding: 8px 15px; border-radius: 6px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-family: monospace; font-weight: bold; font-size: 13px; }
+        .pwr-slider { -webkit-appearance: none; width: 70%; height: 6px; border-radius: 3px; background: #e9ecef; outline: none; }
+        .pwr-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 4px; background: #ffcc00; border: 2px solid #cca300; cursor: pointer; }
+
+        /* 🟢 Active VFO-A Control Window Block */
+        .vfo-main-box { background: #ffffff; border: 2px solid #333; border-radius: 6px; padding: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .vfo-badge { background: #e9ecef; border: 1px solid #333; padding: 4px 8px; font-weight: bold; font-size: 14px; border-radius: 3px; }
+        .vfo-digits { font-size: 42px; font-family: monospace; font-weight: bold; letter-spacing: 2px; color: #212529; flex-grow: 1; text-align: center; }
+        .vfo-dial-wheel { background: #495057; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #212529; cursor: pointer; margin-right: 15px; }
+
+        /* 🔴 Red PTT Button Trigger Box */
+        .ptt-btn { background: #dc3545; border: 2px solid #bd2130; border-radius: 4px; color: white; padding: 10px 15px; font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase; }
+        .ptt-btn.active { background: #28a745; border-color: #1e7e34; }
+
+        /* 🔘 Tuning Control Action Row Toggles */
+        .tune-btn-group { display: flex; gap: 8px; }
+        .tune-btn { background: #ced4da; border: 1px solid #6c757d; border-radius: 4px; padding: 8px 18px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .tune-btn:hover { background: #adb5bd; }
+
+        /* ⚪ Isolated VFO-B Storage Panel Container */
+        .vfo-sub-box { background: #ffffff; border: 1px solid #6c757d; border-radius: 6px; padding: 8px 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .vfo-sub-digits { font-size: 24px; font-family: monospace; font-weight: bold; color: #495057; letter-spacing: 1px; }
+
+        /* 🏷️ Status Badges Row Bar */
+        .status-badge-row { display: flex; gap: 8px; margin-bottom: 15px; font-family: monospace; font-size: 11px; font-weight: bold; }
+        .status-badge { background: #ffffff; border: 1px solid #333; border-radius: 4px; padding: 2px 6px; }
+        .status-badge.highlight { background: #000000; color: #ffffff; }
+
+        /* 🎚️ Filter Tabs Grid Box Strip */
+        .filter-row { display: flex; gap: 6px; background: #ffffff; padding: 6px; border-radius: 6px; margin-bottom: 15px; justify-content: space-between; flex-wrap: wrap; }
+        .filter-lbl { font-size: 10px; color: #6c757d; font-weight: bold; width: 100%; text-align: left; margin-left: 5px; text-transform: uppercase; }
+        .filter-btn { background: #ced4da; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; font-weight: bold; color: #495057; cursor: pointer; flex-grow: 1; }
+        .filter-btn.active { background: #6c757d; color: white; }
+
+        /* ⚡ Base Split/Function Buttons Row (Bottom) */
+        .bottom-action-row { display: flex; gap: 8px; justify-content: center; }
+        .action-btn { background: #ced4da; border: 1px solid #adb5bd; border-radius: 4px; padding: 5px 15px; font-size: 13px; font-weight: bold; color: #495057; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="console-container">
-        <h1>📻 FT-857D Cloud Station Console</h1>
-
-        <!-- Live Frequency Monitor Box -->
-        <div class="display-box">
-            <div>BAND: <span id="active-band">{{ state.current_band }}</span> | <span id="active-shift" style="color:#ffc107;">{{ state.repeater_shift }}</span></div>
-            <div class="freq" id="active-freq">{{ state.current_frequency }}</div>
-            <div id="tx-indicator" class="mode-indicator mode-rx">RECEIVE (RX)</div>
-        </div>
-
-        <!-- Duplex / Simplex Action Row Buttons -->
-        <div class="control-row">
-            <button class="shift-btn" onclick="changeShift('0000000009', 'Simplex')">Simplex</button>
-            <button class="shift-btn" onclick="changeShift('0100000009', 'Minus (-)')">Minus (-)</button>
-            <button class="shift-btn" onclick="changeShift('0200000009', 'Plus (+)')">Plus (+)</button>
-        </div>
-
-        <!-- Dynamic Real-Time Telemetry Bars Section -->
-        <div class="meter-container">
-            <div class="meter-label">📥 S-METER level: <span id="smeter-val" style="color:#0d6efd;">S0</span></div>
-            <div class="meter-bg"><div id="smeter-bar" class="meter-bar smeter-bar"></div></div>
-
-            <div class="meter-label">📤 TRANSMIT POWER output: <span id="power-val" style="color:#dc3545;">0W</span></div>
-            <div class="meter-bg"><div id="power-bar" class="meter-bar tx-bar"></div></div>
-
-            <div class="meter-label">🎚️ AUTOMATIC LEVEL CONTROL: <span id="alc-val" style="color:#ffc107;">0%</span></div>
-            <div class="meter-bg"><div id="alc-bar" class="meter-bar alc-bar"></div></div>
-        </div>
-
-        <!-- IARU Standard Allocations Selection Matrix Grid -->
-        <h3 style="text-align:left; border-bottom:1px solid #333; padding-bottom:5px; color:#ffc107;">⚡ IARU Band Allocations (3 to 440 MHz)</h3>
-        <div class="grid-container">
-            {% for band in bands %}
-                <button class="band-btn" onclick="changeBand('{{ band.hex }}', '{{ band.name }}', '{{ band.freq_display }}')">
-                    <strong>{{ band.name }}</strong><br>
-                    <span style="color: #adb5bd; font-size: 11px;">{{ band.freq_display }}</span>
-                </button>
-            {% endfor %}
-        </div>
+    <!-- 🎛️ Dynamic Target Frequency Bands (Top Row Grid) -->
+    <div class="top-band-row">
+        <div class="band-pill" onclick="selectBand('160m', 1800000)">160m</div>
+        <div class="band-pill" onclick="selectBand('80m', 3573000)">80m</div>
+        <div class="band-pill" onclick="selectBand('60m', 5357000)">60m</div>
+        <div class="band-pill" onclick="selectBand('40m', 7074000)">40m</div>
+        <div class="band-pill" onclick="selectBand('30m', 10136000)">30m</div>
+        <div class="band-pill" onclick="selectBand('20m', 14074000)">20m</div>
+        <div class="band-pill" onclick="selectBand('17m', 18104000)">17m</div>
+        <div class="band-pill" onclick="selectBand('15m', 21074000)">15m</div>
+        <div class="band-pill" onclick="selectBand('12m', 24915000)">12m</div>
+        <div class="band-pill" onclick="selectBand('10m', 28074000)">10m</div>
+        <div class="band-pill" onclick="selectBand('6m', 50313000)">6m</div>
+        <div class="band-pill">AIR</div>
+        <div class="band-pill" onclick="selectBand('2m', 144200000)">2m</div>
+        <div class="band-pill" onclick="selectBand('70cm', 432200000)">70cm</div>
     </div>
 
-    <!-- Live Execution Web Scripts Engine Block -->
-    <script>
-        function changeBand(hexCode, bandName, freqDisplay) {
-            fetch('/api/select-band/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hex_code: hexCode, band_name: bandName, freq_display: freqDisplay })
-            });
-        }
+    <!-- 🟨 The Main Yellow Bezel Rig Body Frame -->
+    <div class="rig-body">
 
-        function changeShift(hexCode, shiftMode) {
-            fetch('/api/select-shift/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hex_code: hexCode, shift_mode: shiftMode })
-            });
-        }
+        <!-- 📟 Mode Selection Header Strip (With AM & DIGI Options) -->
+        <div class="mode-row">
+            <button class="mode-btn active" id="mode-LSB" onclick="setMode('LSB')">LSB</button>
+            <button class="mode-btn" id="mode-USB" onclick="setMode('USB')">USB</button>
+            <button class="mode-btn" id="mode-AM" onclick="setMode('AM')">AM</button>
+            <button class="mode-btn" id="mode-CW" onclick="setMode('CW')">CW</button>
+            <button class="mode-btn" id="mode-CWR" onclick="setMode('CW-R')">CW-R</button>
+            <button class="mode-btn" id="mode-FM" onclick="setMode('FM')">FM</button>
+            <button class="mode-btn" id="mode-C4FM" onclick="setMode('C4FM')">C4FM</button>
+            <button class="mode-btn" id="mode-DIGI" onclick="setMode('DIGI')">DIGI</button>
+        </div>
 
-        // Automatic Telemetry Synchronizer Execution Loop (Runs continuous updates every 1 sec)
-        setInterval(() => {
-            fetch('/api/get-status/')
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('active-band').innerText = data.current_band;
-                    document.getElementById('active-freq').innerText = data.current_frequency;
-                    document.getElementById('active-shift').innerText = data.repeater_shift;
+        <!-- 📊 Real-Time Multi-Function Metrics Panel Layout -->
+        <div class="meter-panel">
+            <div class="meter-line-row">
+                <div style="width:70px;">SIG 1 3 5 7 9 20 40 60</div>
+                <div class="meter-track"><div id="smeter-fill" class="meter-fill" style="background:#007bff;"></div></div>
+            </div>
+            <div class="meter-line-row">
+                <div style="width:70px;">PWR 0 25 50 75 100</div>
+                <div class="meter-track"><div id="power-fill" class="meter-fill" style="background:#dc3545; width:0%;"></div></div>
+            </div>
+            <div class="meter-line-row">
+                <div style="width:70px;">ALC 1 2 3 ∞</div>
+                <div class="meter-track"><div id="alc-fill" class="meter-fill" style="background:#ffc107; width:0%;"></div></div>
+            </div>
+        </div>
 
-                    const txInd = document.getElementById('tx-indicator');
-                    if(data.is_transmitting) {
-                        txInd.innerText = "TRANSMIT (TX)";
-                        txInd.className = "mode-indicator mode-tx";
+        <!-- 🎚️ RF Power Level Slider Control Component -->
+        <div class="slider-panel">
+            <span>RF POWER OUTPUT LIMIT</span>
+            <input type="range" id="pwrSlider" class="pwr-slider" min="5" max="100" value="50" oninput="changePwrLimit(this.value)">
+            <span id="pwr-display">50 Watts</span>
+        </div>
 
-                        // Handle bar tracking styles under TX activity
-                        document.getElementById('smeter-bar').style.width = '0%';
-                        document.getElementById('smeter-val').innerText = "OFF";
-                        document.getElementById('power-bar').style.width = data.tx_power + '%';
-                        document.getElementById('power-val').innerText = data.tx_power + 'W';
-                        document.getElementById('alc-bar').style.width = data.alc + '%';
-                        document.getElementById('alc-val').innerText = data.alc + '%';
-                    } else {
-                        txInd.innerText = "RECEIVE (RX)";
-                        txInd.className = "mode-indicator mode-rx";
+        <!-- 🟢 Primary Active VFO-A Control Window Block (With PTT Integration) -->
+        <div class="vfo-main-box">
+            <button class="ptt-btn" id="ptt-trigger" onclick="togglePTTLock()">PTT</button>
+            <div class="vfo-badge">A</div>
+            <div class="vfo-digits" id="vfo-a-display">03.573.00</div>
+            <div class="vfo-dial-wheel" onclick="tuneStep(100)" title="Click to spin dial knob"></div>
+            <div class="tune-btn-group">
+                <button class="tune-btn" onwheel="handleWheelTuning(event)" onclick="tuneStep(-1000)">Down</button>
+                <button class="tune-btn" onwheel="handleWheelTuning(event)" onclick="tuneStep(1000)">UP</button>
+            </div>
+        </div>
 
-                        // Handle bar tracking styles under RX activity
-                        let sPercentage = (data.smeter / 15) * 100;
-                        document.getElementById('smeter-bar').style.width = sPercentage + '%';
-                        document.getElementById('smeter-val').innerText = 'S' + data.smeter;
-                        document.getElementById('power-bar').style.width = '0%';
-                        document.getElementById('power-val').innerText = '0W';
-                        document.getElementById('alc-bar').style.width = '0%';
-                        document.getElementById('alc-val').innerText = '0%';
-                    }
-                });
-        }, 1000);
-    </script>
-</body>
-</html>
+        <!-- ⚪ Sub VFO-B Storage Register Row -->
+        <div class="vfo-sub-box">
+            <div style="display:flex; gap:15px; align-items:center;">
+                <div class="vfo-badge" style="padding:2px 6px; font-size:12px;">B</div>
+                <div class="vfo-sub-digits" id="vfo-b-display">145.500.00</div>
