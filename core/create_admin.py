@@ -13,14 +13,13 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# Change these to the username and password you want!
-username = 'admin'
-#password = 'secret-password-used'
-password = 'dfrt54DFG342**&;.,hgfrte'
+# 🔐 Pull the credentials safely from Render's Environment
+username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'local-admin')
+password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'local-password')
 email = 'yo5ouc@gmail.com'
 
 if not User.objects.filter(username=username).exists():
     User.objects.create_superuser(username=username, email=email, password=password)
-    print("Superuser created successfully!")
+    print("🚀 Superuser created successfully from environment variables!")
 else:
-    print("Superuser already exists.")
+    print("✅ Superuser already exists. Skipping creation to protect your data.")
