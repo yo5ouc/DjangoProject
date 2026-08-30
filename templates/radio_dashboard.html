@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FT-857D Transceiver Dashboard Control Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #121212;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+        .console-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .display-box {
+            background: #222;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            display: inline-block;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            min-width: 320px;
+        }
+        .freq {
+            font-size: 36px;
+            color: #00ff00;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .mode-indicator {
+            font-weight: bold;
+            padding: 5px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        .mode-rx {
+            background: #198754;
+            color: white;
+        }
+        .mode-tx {
+            background: #dc3545;
+            color: white;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0 25px 0;
+        }
+        .shift-btn {
+            background: #212529;
+            border: 1px solid #495057;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+        .shift-btn:hover {
+            background: #343a40;
+            border-color: #ffc107;
+        }
+
+        .meter-container {
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        .meter-label {
+            font-size: 13px;
+            font-family: monospace;
+            margin-bottom: 4px;
+            color: #aaa;
+            font-weight: bold;
+        }
+        .meter-bg {
+            background: #333;
+            width: 100%;
+            height: 14px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .meter-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+        .smeter-bar { background: #0d6efd; }
+        .tx-bar { background: #dc3545; }
+        .alc-bar { background: #ffc107; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .band-btn {
+            background: #2b3035;
+            border: 1px solid #495057;
+            color: #ffffff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            font-family: monospace;
+            transition: all 0.2s ease;
+        }
+        .band-btn:hover {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            box-shadow: 0 0 8px rgba(13, 110, 253, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="console-container">
+        <h1>📻 FT-857D Cloud Station Console</h1>
+
+        <!-- Live Frequency Monitor Box -->
+        <div class="display-box">
+            <div>BAND: <span id="active-band">{{ state.current_band }}</span> | <span id="active-shift" style="color:#ffc107;">{{ state.repeater_shift }}</span></div>
+            <div class="freq" id="active-freq">{{ state.current_frequency }}</div>
+            <div id="tx-indicator" class="mode-indicator mode-rx">RECEIVE (RX)</div>
+        </div>
+
+        <!-- Duplex / Simplex Action Row Buttons -->
+        <div class="control-row">
+            <button class="shift-btn" onclick="changeShift('0000000009', 'Simplex')">Simplex</button>
+            <button class="shift-btn" onclick="changeShift('0100000009', 'Minus (-)')">Minus (-)</button>
+            <button class="shift-btn" onclick="changeShift('0200000009', 'Plus (+)')">Plus (+)</button>
+        </div>
+
+        <!-- Dynamic Real-Time Telemetry Bars Section -->
+        <div class="meter-container">
+            <div class="meter-label">📥 S-METER level: <span id="smeter-val" style="color:#0d6efd;">S0</span></div>
+            <div class="meter-bg"><div id="smeter-bar" class="meter-bar smeter-bar"></div></div>
+
+            <div class="meter-label">📤 TRANSMIT POWER output: <span id="power-val" style="color:#dc3545;">0W</span></div>
+            <div class="meter-bg"><div id="power-bar" class="meter-bar tx-bar"></div></div>
+
+            <div class="meter-label">🎚️ AUTOMATIC LEVEL CONTROL: <span id="alc-val" style="color:#ffc107;">0%</span></div>
+            <div class="meter-bg"><div id="alc-bar" class="meter-bar alc-bar"></div></div>
+        </div>
+
+        <!-- IARU Standard Allocations Selection Matrix Grid -->
+        <h3 style="text-align:left; border-bottom:1px solid #333; padding-bottom:5px; color:#ffc107;">⚡ IARU Band Allocations (3 to 440 MHz)</h3>
+        <div class="grid-container">
+            {% for band in bands %}
+                <button class="band-btn" onclick="changeBand('{{ band.hex }}', '{{ band.name }}', '{{ band.freq_display }}')">
+                    <strong>{{ band.name }}</strong><br>
+                    <span style="color: #adb5bd; font-size: 11px;">{{ band.freq_display }}</span>
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Live Execution Web Scripts Engine Block -->
+    <script>
+        function changeBand(hexCode, bandName, freqDisplay) {
+            fetch('/api/select-band/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hex_code: hexCode, band_name: bandName, freq_display: freqDisplay })
+            });
+        }
+
+        function changeShift(hexCode, shiftMode) {
+            fetch('/api/select-shift/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hex_code: hexCode, shift_mode: shiftMode })
+            });
+        }
+
+        // Automatic Telemetry Synchronizer Execution Loop (Runs continuous updates every 1 sec)
+        setInterval(() => {
+            fetch('/api/get-status/')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('active-band').innerText = data.current_band;
+                    document.getElementById('active-freq').innerText = data.current_frequency;
+                    document.getElementById('active-shift').innerText = data.repeater_shift;
+
+                    const txInd = document.getElementById('tx-indicator');
+                    if(data.is_transmitting) {
+                        txInd.innerText = "TRANSMIT (TX)";
+                        txInd.className = "mode-indicator mode-tx";
+
+                        // Handle bar tracking styles under TX activity
+                        document.getElementById('smeter-bar').style.width = '0%';
+                        document.getElementById('smeter-val').innerText = "OFF";
+                        document.getElementById('power-bar').style.width = data.tx_power + '%';
+                        document.getElementById('power-val').innerText = data.tx_power + 'W';
+                        document.getElementById('alc-bar').style.width = data.alc + '%';
+                        document.getElementById('alc-val').innerText = data.alc + '%';
+                    } else {
+                        txInd.innerText = "RECEIVE (RX)";
+                        txInd.className = "mode-indicator mode-rx";
+
+                        // Handle bar tracking styles under RX activity
+                        let sPercentage = (data.smeter / 15) * 100;
+                        document.getElementById('smeter-bar').style.width = sPercentage + '%';
+                        document.getElementById('smeter-val').innerText = 'S' + data.smeter;
+                        document.getElementById('power-bar').style.width = '0%';
+                        document.getElementById('power-val').innerText = '0W';
+                        document.getElementById('alc-bar').style.width = '0%';
+                        document.getElementById('alc-val').innerText = '0%';
+                    }
+                });
+        }, 1000);
+    </script>
+</body>
+</html>

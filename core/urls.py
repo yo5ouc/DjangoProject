@@ -16,7 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from core import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+# 📻 Your new transceiver console and api endpoints
+    path('radio/', views.radio_dashboard, name='radio_dashboard'),
+    path('api/select-band/', views.select_band_api, name='select_band'),
+    path('api/select-shift/', views.select_shift_api, name='select_shift'),
+    path('api/update-rig/', views.update_telemetry_api, name='update_telemetry'),
+    path('api/get-status/', views.get_status_api, name='get_status'),
 ]
