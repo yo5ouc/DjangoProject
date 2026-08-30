@@ -53,10 +53,9 @@ class FT991A(BaseRadio):
             freq_mhz = float(freq_hz) / 1000000
 
             mhz_str = f"{freq_mhz:08.5f}"
-            parts = mhz_str.split('.')
-            whole = parts[0]
-            thousands = parts[1][0:3]
-            hundreds = parts[1][3:5]
+            whole = mhz_str[0:2]
+            thousands = mhz_str[3:6]
+            hundreds = mhz_str[6:8]
 
             return f"{whole}.{thousands}.{hundreds}"
         except (ValueError, IndexError):
@@ -98,7 +97,6 @@ def update_telemetry_api(request):
         # Update the values safely
         LIVE_RIG_STATE["current_frequency"] = driver.parse_frequency(raw_data)
 
-        # 🌟 THE CORRECTION: Checks both the script status AND the web dashboard force_tx flag
         script_tx = data.get("tx_status", False)
         web_tx = data.get("force_tx", False)
         LIVE_RIG_STATE["is_transmitting"] = script_tx or web_tx
@@ -124,22 +122,17 @@ def select_band_api(request):
         data = json.loads(request.body)
         LIVE_RIG_STATE["pending_command"] = data.get("hex_code")
 
-        # Format the incoming selection nicely to avoid VFO parsing glitches
-        raw_display = data.get("freq_display", "03.573")
-        if "." not in raw_display:
-            try:
-                val = float(raw_display)
-                LIVE_RIG_STATE["current_frequency"] = f"{val:08.5f}".replace(".", ".")[0:2] + "." + \
-                                                      f"{val:08.5f}".split(".")[1][0:3] + "." + \
-                                                      f"{val:08.5f}".split(".")[1][3:5]
-            except ValueError:
-                LIVE_RIG_STATE["current_frequency"] = raw_display
-        else:
-            # Add placeholders for hundreds digits if missing
-            parts = raw_display.split('.')
-            whole = parts[0].zfill(2)
-            rest = parts[1].ljust(5, '0')
-            LIVE_RIG_STATE["current_frequency"] = f"{whole}.{rest[0:3]}.{rest[3:5]}"
+        # ✅ FIXED: Standard float parsing rule blocks any zfill/ljust formatting errors
+        raw_display = data.get("freq_display", "3.573")
+        try:
+            val = float(raw_display.replace(" MHz", ""))
+            mhz_str = f"{val:08.5f}"
+            whole = mhz_str[0:2]
+            thousands = mhz_str[3:6]
+            hundreds = mhz_str[6:8]
+            LIVE_RIG_STATE["current_frequency"] = f"{whole}.{thousands}.{hundreds}"
+        except ValueError:
+            LIVE_RIG_STATE["current_frequency"] = "03.573.00"
 
         LIVE_RIG_STATE["current_band"] = data.get("band_name")
         return JsonResponse({"status": "staged"})
