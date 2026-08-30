@@ -23,3 +23,16 @@ if not User.objects.filter(username=username).exists():
     print("🚀 Superuser created successfully from environment variables!")
 else:
     print("✅ Superuser already exists. Skipping creation to protect your data.")
+
+# 🔐 Pull the Regular User credentials safely from Render's Environment
+regular_username = os.environ.get('REGULAR_USER_NAME', 'local-operator')
+regular_password = os.environ.get('REGULAR_USER_PASSWORD', 'local-user-password')
+regular_email = 'yo5ouc@gmail.com'
+
+# 🛑 Safe database check to prevent duplicate accounts
+if not User.objects.filter(username=regular_username).exists():
+    # Use create_user to make it a normal account
+    User.objects.create_user(username=regular_username, password=regular_password, email=regular_email)
+    print("👤 Regular user created successfully from environment variables!")
+else:
+    print("✅ Regular user already exists. Skipping creation.")
