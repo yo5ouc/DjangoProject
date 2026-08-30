@@ -5,8 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 # 📡 1. Global state dictionary tracking your active telemetry
 LIVE_RIG_STATE = {
-    "current_frequency": "14.074 MHz",
-    "current_band": "20 Meters",
+    "current_frequency": "03.573.00",
+    "current_band": "80 Meters",
     "repeater_shift": "Simplex",
     "is_transmitting": False,
     "smeter": 0,
@@ -26,22 +26,42 @@ class BaseRadio:
 
 class FT857D(BaseRadio):
     def parse_frequency(self, hex_data):
-        # Hex translation: E.g., "01407425..." -> 14.074 MHz
         try:
-            freq_str = hex_data[0:8]
-            return f"{float(freq_str) / 1000000:.3f} MHz"
-        except (ValueError, IndexOff):
-            return "Error Decoding Hex"
+            # Cleanly handle different incoming string lengths from the simulation
+            if len(hex_data) >= 10:
+                clean_digits = hex_data[:-2]  # Strip trailing mode opcode ('02')
+            else:
+                clean_digits = hex_data[0:8]
+
+            freq_mhz = float(clean_digits) / 1000000
+
+            # Format to look exactly like the faceplate segmented display: 03.573.00
+            mhz_str = f"{freq_mhz:08.5f}"  # E.g. "03.57300"
+            parts = mhz_str.split('.')
+            whole = parts[0]
+            thousands = parts[1][0:3]
+            hundreds = parts[1][3:5]
+
+            return f"{whole}.{thousands}.{hundreds}"
+        except (ValueError, IndexError):
+            return "03.573.00"
 
 
 class FT991A(BaseRadio):
     def parse_frequency(self, ascii_str):
-        # ASCII text translation: E.g., "FA014074000;" -> 14.074 MHz
         try:
             freq_hz = ascii_str[2:-1]
-            return f"{float(freq_hz) / 1000000:.3f} MHz"
-        except (ValueError, IndexOff):
-            return "Error Decoding ASCII"
+            freq_mhz = float(freq_hz) / 1000000
+
+            mhz_str = f"{freq_mhz:08.5f}"
+            parts = mhz_str.split('.')
+            whole = parts[0]
+            thousands = parts[1][0:3]
+            hundreds = parts[1][3:5]
+
+            return f"{whole}.{thousands}.{hundreds}"
+        except (ValueError, IndexError):
+            return "03.573.00"
 
 
 # -----------------------------------------------------------------
@@ -64,27 +84,33 @@ def radio_dashboard(request):
 
 @csrf_exempt
 def update_telemetry_api(request):
-    """📥 PLACED HERE: Multi-rig interpretation engine endpoint."""
+    """📥 Multi-rig interpretation engine endpoint."""
     global LIVE_RIG_STATE
     if request.method == "POST":
         data = json.loads(request.body)
-        rig_type = data.get("rig_type", "FT-857D")  # Checks which radio is sending data
+        rig_type = data.get("rig_type", "FT-857D")
         raw_data = data.get("raw_cat", "")
 
-        # Select the correct interpreter engine!
         if rig_type == "FT-857D":
             driver = FT857D()
         else:
             driver = FT991A()
 
-        # Dynamically set telemetry metrics
+        # Update the values safely
         LIVE_RIG_STATE["current_frequency"] = driver.parse_frequency(raw_data)
         LIVE_RIG_STATE["is_transmitting"] = data.get("tx_status", False)
         LIVE_RIG_STATE["smeter"] = data.get("smeter", 0)
         LIVE_RIG_STATE["tx_power"] = data.get("tx_power", 0)
         LIVE_RIG_STATE["alc"] = data.get("alc", 0)
 
-        return JsonResponse({"status": "success", "pending_hardware_command": LIVE_RIG_STATE["pending_command"]})
+        # Clear any pending commands once the bridge has successfully picked them up
+        response_data = {
+            "status": "success",
+            "pending_hardware_command": LIVE_RIG_STATE["pending_command"],
+            "force_tx": LIVE_RIG_STATE["is_transmitting"]
+        }
+
+        return JsonResponse(response_data)
     return JsonResponse({"error": "Invalid method"}, status=400)
 
 
