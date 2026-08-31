@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.views.generic import RedirectView
 from core import views
 
 urlpatterns = [
+# Automatically redirect "/" to "/radio/"
+    path('', RedirectView.as_view(url='/radio/', permanent=False)),
     path('admin/', admin.site.urls),
 # 📻 Your new transceiver console and api endpoints
     path('radio/', views.radio_dashboard, name='radio_dashboard'),
