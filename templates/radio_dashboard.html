@@ -53,13 +53,31 @@
             transition: color 0.1s ease;
         }
         .tune-digit:hover {
-            color: #dc3545 !important; /* Turns red when hovered */
+            color: #dc3545 !important;
             text-shadow: 0 0 2px rgba(220, 53, 69, 0.4);
         }
 
         .vfo-dial-wheel { background: #495057; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #212529; cursor: pointer; margin-right: 15px; }
-        .ptt-btn { background: #dc3545; border: 2px solid #bd2130; border-radius: 4px; color: white; padding: 10px 15px; font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase; }
-        .ptt-btn.active { background: #28a745; border-color: #1e7e34; }
+
+        /* PTT Button: Green for RX, Red for TX */
+        .ptt-btn {
+            background: #28a745;
+            border: 2px solid #1e7e34;
+            border-radius: 4px;
+            color: white;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            min-width: 85px;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .ptt-btn.active {
+            background: #dc3545;
+            border-color: #bd2130;
+        }
+
         .tune-btn-group { display: flex; gap: 8px; }
         .tune-btn { background: #ced4da; border: 1px solid #6c757d; border-radius: 4px; padding: 8px 18px; font-weight: bold; font-size: 14px; cursor: pointer; }
         .tune-btn:hover { background: #adb5bd; }
@@ -317,6 +335,7 @@
             const data = JSON.parse(e.data);
             if (data.source === "bridge") {
                 const txInd = document.getElementById('badge-tx-rx');
+                const pttBtn = document.getElementById('ptt-trigger');
                 const smeterBar = document.getElementById('smeter-fill');
                 const powerBar = document.getElementById('power-fill');
                 const swrBar = document.getElementById('swr-fill');
@@ -324,6 +343,8 @@
 
                 if (data.is_transmitting || isWebTXLocked) {
                     txInd.innerText = "TX";
+                    pttBtn.innerText = "ON AIR";
+                    pttBtn.classList.add('active');
                     smeterBar.style.width = '0%';
 
                     let displayPwr = data.tx_power > 0 ? data.tx_power : currentPwrSetting;
@@ -340,6 +361,9 @@
                     alcBar.style.background = rawAlc > 50 ? '#dc3545' : '#007bff';
                 } else {
                     txInd.innerText = "RX";
+                    pttBtn.innerText = "PTT";
+                    pttBtn.classList.remove('active');
+
                     let rawSig = data.smeter || 0;
                     let sPct = (rawSig / 15) * 100;
                     smeterBar.style.width = sPct + '%';
@@ -435,7 +459,7 @@
             isWebTXLocked = !isWebTXLocked;
             const pttBtn = document.getElementById('ptt-trigger');
             if (isWebTXLocked) {
-                pttBtn.innerText = "TX";
+                pttBtn.innerText = "ON AIR";
                 pttBtn.classList.add('active');
             } else {
                 pttBtn.innerText = "PTT";
