@@ -43,8 +43,20 @@
            ========================================================================== */
         .vfo-main-box { background: #ffffff; border: 2px solid #333; border-radius: 6px; padding: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
         .vfo-badge { background: #e9ecef; border: 1px solid #333; padding: 4px 8px; font-weight: bold; font-size: 14px; border-radius: 3px; }
-        .vfo-digits { font-size: 42px; font-family: monospace; font-weight: bold; letter-spacing: 2px; color: #212529; flex-grow: 1; text-align: center; }
+        .vfo-digits { font-size: 42px; font-family: monospace; font-weight: bold; letter-spacing: 2px; color: #212529; flex-grow: 1; text-align: center; user-select: none; }
         .vfo-digits .small-digits { font-size: 0.65em; vertical-align: baseline; opacity: 0.85; }
+
+        /* Per-Digit Wheel Tuning & Hover Indicator */
+        .tune-digit {
+            cursor: ns-resize;
+            display: inline-block;
+            transition: color 0.1s ease;
+        }
+        .tune-digit:hover {
+            color: #dc3545 !important; /* Turns red when hovered */
+            text-shadow: 0 0 2px rgba(220, 53, 69, 0.4);
+        }
+
         .vfo-dial-wheel { background: #495057; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #212529; cursor: pointer; margin-right: 15px; }
         .ptt-btn { background: #dc3545; border: 2px solid #bd2130; border-radius: 4px; color: white; padding: 10px 15px; font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase; }
         .ptt-btn.active { background: #28a745; border-color: #1e7e34; }
@@ -56,7 +68,7 @@
            7. SUB VFO-B & MEMORY RECALL
            ========================================================================== */
         .vfo-sub-box { background: #ffffff; border: 1px solid #6c757d; border-radius: 6px; padding: 8px 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-        .vfo-sub-digits { font-size: 24px; font-family: monospace; font-weight: bold; color: #495057; letter-spacing: 1px; }
+        .vfo-sub-digits { font-size: 24px; font-family: monospace; font-weight: bold; color: #495057; letter-spacing: 1px; user-select: none; }
         .vfo-sub-digits .small-digits { font-size: 0.7em; vertical-align: baseline; opacity: 0.85; }
 
         /* ==========================================================================
@@ -177,10 +189,10 @@
             <button class="ptt-btn" id="ptt-trigger" onclick="togglePTTLock()">PTT</button>
             <div class="vfo-badge">A</div>
             <div class="vfo-digits" id="vfo-a-display">03.573.<span class="small-digits">00</span></div>
-            <div class="vfo-dial-wheel" onclick="tuneStep(100)" title="Click to spin dial knob"></div>
+            <div class="vfo-dial-wheel" onclick="tuneStep(100)" title="Click to tune 100 Hz"></div>
             <div class="tune-btn-group">
-                <button class="tune-btn" onwheel="handleWheelTuning(event)" onclick="tuneStep(-1000)">Down</button>
-                <button class="tune-btn" onwheel="handleWheelTuning(event)" onclick="tuneStep(1000)">UP</button>
+                <button class="tune-btn" onclick="tuneStep(-1000)">Down</button>
+                <button class="tune-btn" onclick="tuneStep(1000)">UP</button>
             </div>
         </div>
 
@@ -244,66 +256,41 @@
 
         // --- Amateur Radio Band Plan Designations ---
         const BAND_PLAN_SEGMENTS = [
-            // 160m
             { start: 1800000, end: 1838000, type: "CW" },
-            { start: 1838000, end: 1843000, type: "DIGI" }, // 1.840 FT8
+            { start: 1838000, end: 1843000, type: "DIGI" },
             { start: 1843000, end: 2000000, type: "PHONE" },
-
-            // 80m
             { start: 3500000, end: 3570000, type: "CW" },
-            { start: 3570000, end: 3600000, type: "DIGI" }, // 3.573 FT8, 3.575 FT4, JS8
+            { start: 3570000, end: 3600000, type: "DIGI" },
             { start: 3600000, end: 3800000, type: "PHONE" },
-
-            // 60m
             { start: 5351500, end: 5354000, type: "CW" },
-            { start: 5354000, end: 5366000, type: "DIGI" }, // 5.357 FT8
+            { start: 5354000, end: 5366000, type: "DIGI" },
             { start: 5366000, end: 5366500, type: "PHONE" },
-
-            // 40m
             { start: 7000000, end: 7040000, type: "CW" },
-            { start: 7040000, end: 7060000, type: "DIGI" }, // 7.0475 FT4, 7.074 FT8
+            { start: 7040000, end: 7060000, type: "DIGI" },
             { start: 7060000, end: 7200000, type: "PHONE" },
-
-            // 30m (CW & Digital only)
             { start: 10100000, end: 10130000, type: "CW" },
-            { start: 10130000, end: 10150000, type: "DIGI" }, // 10.136 FT8, 10.140 FT4
-
-            // 20m
+            { start: 10130000, end: 10150000, type: "DIGI" },
             { start: 14000000, end: 14070000, type: "CW" },
-            { start: 14070000, end: 14101000, type: "DIGI" }, // 14.074 FT8, 14.080 FT4, RTTY
+            { start: 14070000, end: 14101000, type: "DIGI" },
             { start: 14101000, end: 14350000, type: "PHONE" },
-
-            // 17m
             { start: 18068000, end: 18095000, type: "CW" },
-            { start: 18095000, end: 18120000, type: "DIGI" }, // 18.100 FT8, 18.104 FT4
+            { start: 18095000, end: 18120000, type: "DIGI" },
             { start: 18120000, end: 18168000, type: "PHONE" },
-
-            // 15m
             { start: 21000000, end: 21070000, type: "CW" },
-            { start: 21070000, end: 21120000, type: "DIGI" }, // 21.074 FT8, 21.140 FT4
+            { start: 21070000, end: 21120000, type: "DIGI" },
             { start: 21150000, end: 21450000, type: "PHONE" },
-
-            // 12m
             { start: 24890000, end: 24915000, type: "CW" },
-            { start: 24915000, end: 24930000, type: "DIGI" }, // 24.915 FT8, 24.919 FT4
+            { start: 24915000, end: 24930000, type: "DIGI" },
             { start: 24930000, end: 24990000, type: "PHONE" },
-
-            // 10m
             { start: 28000000, end: 28070000, type: "CW" },
-            { start: 28070000, end: 28190000, type: "DIGI" }, // 28.074 FT8, 28.180 FT4
+            { start: 28070000, end: 28190000, type: "DIGI" },
             { start: 28200000, end: 29700000, type: "PHONE" },
-
-            // 6m (50 MHz)
             { start: 50000000, end: 50100000, type: "CW" },
-            { start: 50310000, end: 50330000, type: "DIGI" }, // 50.313 FT8, 50.318 FT4
+            { start: 50310000, end: 50330000, type: "DIGI" },
             { start: 50100000, end: 54000000, type: "PHONE" },
-
-            // 2m (144-146 MHz)
             { start: 144000000, end: 144150000, type: "CW" },
-            { start: 144150000, end: 144200000, type: "DIGI" }, // 144.174 FT8
+            { start: 144150000, end: 144200000, type: "DIGI" },
             { start: 144200000, end: 146000000, type: "PHONE" },
-
-            // 70cm (430-440 MHz)
             { start: 432000000, end: 432100000, type: "CW" },
             { start: 432100000, end: 432200000, type: "DIGI" },
             { start: 430000000, end: 440000000, type: "PHONE" }
@@ -311,16 +298,13 @@
 
         function getDesignatedColor(hz) {
             const match = BAND_PLAN_SEGMENTS.find(seg => hz >= seg.start && hz <= seg.end);
-            if (!match) return "#212529"; // Default black if outside defined boundaries
+            if (!match) return "#212529";
 
             switch (match.type) {
-                case "DIGI":
-                    return "#198754"; // Green for Digital/FT8/FT4/RTTY
-                case "CW":
-                    return "#d63384"; // Magenta for CW segments
+                case "DIGI": return "#198754";
+                case "CW":   return "#d63384";
                 case "PHONE":
-                default:
-                    return "#212529"; // Black for SSB, AM, FM
+                default:     return "#212529";
             }
         }
 
@@ -342,25 +326,20 @@
                     txInd.innerText = "TX";
                     smeterBar.style.width = '0%';
 
-                    // 1. PWR: 0 to 100W (Threshold > 75% turns red)
                     let displayPwr = data.tx_power > 0 ? data.tx_power : currentPwrSetting;
                     powerBar.style.width = displayPwr + '%';
                     powerBar.style.background = displayPwr > 75 ? '#dc3545' : '#007bff';
 
-                    // 2. SWR: 1.0 (0%) to 3.0+ (100%) (Threshold >= 2.0 turns red)
                     let rawSwr = data.swr !== undefined ? data.swr : 1.2;
                     let swrPct = Math.min(Math.max(((rawSwr - 1.0) / 2.0) * 100, 0), 100);
                     swrBar.style.width = swrPct + '%';
                     swrBar.style.background = rawSwr >= 2.0 ? '#dc3545' : '#007bff';
 
-                    // 3. ALC: 0 to 100% (Threshold > 50% turns red)
                     let rawAlc = data.alc !== undefined ? data.alc : 30;
                     alcBar.style.width = rawAlc + '%';
                     alcBar.style.background = rawAlc > 50 ? '#dc3545' : '#007bff';
                 } else {
                     txInd.innerText = "RX";
-
-                    // SIG (S-Meter): 0 to 15 (S9 = 9) (Threshold > 9 turns red)
                     let rawSig = data.smeter || 0;
                     let sPct = (rawSig / 15) * 100;
                     smeterBar.style.width = sPct + '%';
@@ -373,21 +352,56 @@
 
                 if (data.freq_hz && data.freq_hz !== currentFreqHz) {
                     currentFreqHz = data.freq_hz;
-                    const vfoElem = document.getElementById('vfo-a-display');
-                    vfoElem.innerHTML = formatFrequency(currentFreqHz);
-                    vfoElem.style.color = getDesignatedColor(currentFreqHz);
+                    updateInterfaceDisplay();
                 }
             }
         };
 
-        function formatFrequency(hz) {
+        // --- Interactive Per-Digit VFO Formatter ---
+        function formatInteractiveFrequency(hz, isVFO_A = true) {
             let mhz = (hz / 1000000).toFixed(5);
-            let segments = mhz.split('.');
-            let whole = segments[0].padStart(2, '0');
-            let rest = segments[1];
-            let thousands = rest.substring(0, 3);
-            let hundreds = rest.substring(3, 5);
-            return `${whole}.${thousands}.<span class="small-digits">${hundreds}</span>`;
+            let [whole, decimals] = mhz.split('.');
+            let wholePadded = whole.padStart(2, '0');
+
+            let vfoTag = isVFO_A ? "'A'" : "'B'";
+
+            // Digits before dot (100MHz / 10MHz / 1MHz)
+            let wholeHtml = "";
+            let len = wholePadded.length;
+            for (let i = 0; i < len; i++) {
+                let weight = Math.pow(10, len - 1 - i) * 1000000;
+                let char = wholePadded[i];
+                wholeHtml += `<span class="tune-digit" onwheel="handleDigitWheel(event, ${weight}, ${vfoTag})">${char}</span>`;
+            }
+
+            // First 3 decimals (100kHz, 10kHz, 1kHz)
+            let k100 = `<span class="tune-digit" onwheel="handleDigitWheel(event, 100000, ${vfoTag})">${decimals[0]}</span>`;
+            let k10  = `<span class="tune-digit" onwheel="handleDigitWheel(event, 10000, ${vfoTag})">${decimals[1]}</span>`;
+            let k1   = `<span class="tune-digit" onwheel="handleDigitWheel(event, 1000, ${vfoTag})">${decimals[2]}</span>`;
+
+            // Last 2 decimals in smaller font (100Hz, 10Hz)
+            let h100 = `<span class="tune-digit" onwheel="handleDigitWheel(event, 100, ${vfoTag})">${decimals[3]}</span>`;
+            let h10  = `<span class="tune-digit" onwheel="handleDigitWheel(event, 10, ${vfoTag})">${decimals[4]}</span>`;
+
+            return `${wholeHtml}.${k100}${k10}${k1}.<span class="small-digits">${h100}${h10}</span>`;
+        }
+
+        // --- Mouse Wheel Per-Digit Step Listener ---
+        function handleDigitWheel(event, weightHz, vfoTarget) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Scrolling UP (deltaY < 0) increments, DOWN decrements
+            let step = event.deltaY < 0 ? weightHz : -weightHz;
+
+            if (vfoTarget === 'A') {
+                currentFreqHz = Math.max(100000, currentFreqHz + step);
+                updateInterfaceDisplay();
+                submitRigTelemetry();
+            } else {
+                vfoBFreqHz = Math.max(100000, vfoBFreqHz + step);
+                updateInterfaceDisplay();
+            }
         }
 
         function selectBand(bandName, baseHz) {
@@ -401,11 +415,6 @@
             currentFreqHz += stepHz;
             updateInterfaceDisplay();
             submitRigTelemetry();
-        }
-
-        function handleWheelTuning(event) {
-            event.preventDefault();
-            tuneStep(event.deltaY < 0 ? 1000 : -1000);
         }
 
         function setMode(modeStr) {
@@ -459,11 +468,11 @@
 
         function updateInterfaceDisplay() {
             const vfoElem = document.getElementById('vfo-a-display');
-            vfoElem.innerHTML = formatFrequency(currentFreqHz);
+            vfoElem.innerHTML = formatInteractiveFrequency(currentFreqHz, true);
             vfoElem.style.color = getDesignatedColor(currentFreqHz);
 
             const vfoSubElem = document.getElementById('vfo-b-display');
-            vfoSubElem.innerHTML = formatFrequency(vfoBFreqHz);
+            vfoSubElem.innerHTML = formatInteractiveFrequency(vfoBFreqHz, false);
             vfoSubElem.style.color = getDesignatedColor(vfoBFreqHz);
         }
 
