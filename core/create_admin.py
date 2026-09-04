@@ -10,29 +10,60 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
+from core.models import Station
 
 User = get_user_model()
 
-# 🔐 Pull the credentials safely from Render's Environment
+# 🔐 1. Superuser Setup (YO5OUC)
 username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'local-admin')
 password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'local-password')
 email = 'yo5ouc@gmail.com'
 
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email=email, password=password)
+admin_user, created = User.objects.get_or_create(
+    username=username,
+    defaults={'email': email, 'is_staff': True, 'is_superuser': True}
+)
+if not created:
+    admin_user.is_staff = True
+    admin_user.is_superuser = True
+admin_user.set_password(password)
+admin_user.save()
+
+if created:
     print("🚀 Superuser created successfully from environment variables!")
 else:
-    print("✅ Superuser already exists. Skipping creation to protect your data.")
+    print("✅ Superuser updated/verified successfully.")
 
-# 🔐 Pull the Regular User credentials safely from Render's Environment
+# Automatically provision station for superuser
+station1, _ = Station.objects.get_or_create(
+    callsign="YO5OUC",
+    defaults={'owner': admin_user, 'is_active': True}
+)
+print(f"📡 Station {station1.callsign} assigned to {username}.")
+
+
+# 🔐 2. Regular Operator Setup (YO5YM)
 regular_username = os.environ.get('REGULAR_USER_NAME', 'local-operator')
 regular_password = os.environ.get('REGULAR_USER_PASSWORD', 'local-user-password')
 regular_email = 'yo5ouc@gmail.com'
 
-# 🛑 Safe database check to prevent duplicate accounts
-if not User.objects.filter(username=regular_username).exists():
-    # Use create_user to make it a normal account
-    User.objects.create_user(username=regular_username, password=regular_password, email=regular_email)
+op_user, created = User.objects.get_or_create(
+    username=regular_username,
+    defaults={'email': regular_email, 'is_staff': True}
+)
+if not created:
+    op_user.is_staff = True
+op_user.set_password(regular_password)
+op_user.save()
+
+if created:
     print("👤 Regular user created successfully from environment variables!")
 else:
-    print("✅ Regular user already exists. Skipping creation.")
+    print("✅ Regular user updated/verified successfully.")
+
+# Automatically provision station for regular operator
+station2, _ = Station.objects.get_or_create(
+    callsign="YO5YM",
+    defaults={'owner': op_user, 'is_active': True}
+)
+print(f"📡 Station {station2.callsign} assigned to {regular_username}.")
