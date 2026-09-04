@@ -5,7 +5,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'local-development-secret-key')
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "yo5ouc.remoteusb.org",
+    ".remoteusb.org",
+    ".onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 USE_X_FORWARDED_HOST = True
 
 INSTALLED_APPS = [
@@ -17,6 +23,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    # Add your core app here:
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +71,12 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://yo5ouc.remoteusb.org",
+    "https://*.remoteusb.org",       # Covers any other subdomains
+    "https://*.onrender.com",        # Useful for default Render subdomains
+]
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
