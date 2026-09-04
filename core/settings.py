@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+LOGIN_URL = "/admin/login/"
+LOGIN_REDIRECT_URL = "/radio/"
+LOGOUT_REDIRECT_URL = "/admin/login/"
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'local-development-secret-key')
 DEBUG = True
 ALLOWED_HOSTS = [
