@@ -20,6 +20,10 @@ from django.views.generic import RedirectView
 from core import views
 
 urlpatterns = [
+# General station directory
+    path("radio/", views.station_directory, name="station_directory"),
+    # Dedicated station console: e.g. /radio/yo5ouc/ or /radio/yo5xyz/
+    path("radio/<slug:station_id>/", views.radio_console, name="radio_console"),
 # Automatically redirect "/" to "/radio/"
     path('', RedirectView.as_view(url='/radio/', permanent=False)),
     path('admin/', admin.site.urls),

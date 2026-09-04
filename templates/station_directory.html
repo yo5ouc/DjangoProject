@@ -1,10 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Radio Station Directory</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #121417;
+            color: #e0e6ed;
+            margin: 0;
+            padding: 40px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+        h1 {
+            color: #4da3ff;
+            border-bottom: 2px solid #232931;
+            padding-bottom: 12px;
+        }
+        .station-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .card {
+            background: #1c2128;
+            border: 1px solid #2d333b;
+            border-radius: 8px;
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: #4da3ff;
+        }
+        .callsign {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+            margin-bottom: 8px;
+        }
+        .meta {
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #2ea043;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .user-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .logout-link {
+            color: #f85149;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-$END$
+<div class="container">
+    <div class="user-nav">
+        <div>Logged in as: <strong>{{ request.user.username }}</strong></div>
+        <a class="logout-link" href="/admin/logout/">Logout</a>
+    </div>
+
+    <h1>Available Transceiver Stations</h1>
+
+    <div class="station-grid">
+        {% for station in stations %}
+        <a class="card" href="{% url 'radio_console' station.callsign|lower %}">
+            <div class="callsign">
+                <span class="status-dot"></span>{{ station.callsign }}
+            </div>
+            <div class="meta">Operator: {{ station.owner.username }}</div>
+            <div class="meta" style="margin-top: 10px; color: #4da3ff;">Connect Console &rarr;</div>
+        </a>
+        {% empty %}
+        <p>No active radio stations are currently assigned to your account.</p>
+        {% endfor %}
+    </div>
+</div>
 </body>
 </html>

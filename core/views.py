@@ -1,5 +1,7 @@
 import json
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Station
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -153,3 +155,44 @@ def select_shift_api(request):
 @csrf_exempt
 def get_status_api(request):
     return JsonResponse(LIVE_RIG_STATE)
+
+@login_required
+def station_directory(request):
+    """
+    Landing page after login: lists stations the user is allowed to access.
+    Superusers see all stations; regular users see their own.
+    """
+    if request.user.is_superuser:
+        stations = Station.objects.filter(is_active=True)
+    else:
+        stations = Station.objects.filter(owner=request.user, is_active=True)
+
+    # If the user only has one station, skip the directory and go straight to the console
+    if stations.count() == 1 and not request.user.is_superuser:
+        return redirect("radio_console", station_id=stations.first().callsign.lower())
+
+    return render(request, "station_directory.html", {"stations": stations})
+
+
+@login_required
+def radio_console(request, station_id):
+    """
+    Serves the specific radio console for a given station.
+    """
+    # Look up station
+    station = get_object_or_404(Station, callsign__iexact=station_id, is_active=True)
+
+    # Permission check: must be owner or superuser
+    if station.owner != request.user and not request.user.is_superuser:
+        return render(request, "unauthorized_station.html", {
+            "station_callsign": station.callsign,
+            "username": request.user.username
+        }, status=403)
+
+    context = {
+        "callsign": station.callsign.upper(),
+        "station_id": station.callsign.lower(),
+        "owner_username": station.owner.username,
+        "is_admin": request.user.is_superuser,
+    }
+    return render(request, "radio_dashboard.html", context)
