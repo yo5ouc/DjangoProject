@@ -339,6 +339,15 @@
             <div class="status-badge highlight">AGC-A</div>
         </div>
 
+        <!-- Compact Audio Control Panel -->
+        <div class="card bg-dark text-white p-3 mb-3" style="max-width: 320px; border: 1px solid #495057; border-radius: 8px;">
+            <h5 class="card-title mb-2" style="font-size: 16px;">Audio Gateway</h5>
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="font-monospace text-muted" id="audio-stream-status" style="font-size: 12px; color: #ff5252 !important;">Muted</span>
+                <button id="toggle-audio-btn" class="btn btn-sm btn-success" onclick="toggleAudioStream()">Enable Audio</button>
+            </div>
+        </div>
+
         <!-- Filter & Processing Modules -->
         <div class="filter-row">
             <div class="filter-lbl">Filter & Processing Modules</div>
@@ -372,6 +381,38 @@
         let currentPwrSetting = 50;
 
         let bridgeWatchdog = null;
+
+        let audioCtx = null;
+        let nextPlayTime = 0;
+        let isAudioActive = false;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleAudioStream() {
+            isAudioActive = !isAudioActive;
+            const btn = document.getElementById('toggle-audio-btn');
+            const statusEl = document.getElementById('audio-stream-status');
+
+            if (isAudioActive) {
+                initAudioContext();
+                btn.innerText = "Disable Audio";
+                btn.className = "btn btn-sm btn-danger";
+                statusEl.innerText = "Streaming";
+                statusEl.style.color = "#4caf50 !important";
+            } else {
+                btn.innerText = "Enable Audio";
+                btn.className = "btn btn-sm btn-success";
+                statusEl.innerText = "Muted";
+                statusEl.style.color = "#ff5252 !important";
+            }
+        }
 
         function resetBridgeWatchdog() {
             if (bridgeWatchdog) clearTimeout(bridgeWatchdog);
@@ -539,6 +580,40 @@
                     updateInterfaceDisplay();
                 }
             }
+
+            if (data.source === "audio_rx" && data.payload && isAudioActive) {
+                try {
+                    const binaryString = atob(data.payload);
+                    const len = binaryString.length;
+                    const bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    const int16Data = new Int16Array(bytes.buffer);
+                    const float32Data = new Float32Array(int16Data.length);
+                    for (let i = 0; i < int16Data.length; i++) {
+                        float32Data[i] = int16Data[i] / 32768.0;
+                    }
+
+                    const audioBuffer = audioCtx.createBuffer(1, float32Data.length, 48000);
+                    audioBuffer.getChannelData(0).set(float32Data);
+
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(audioCtx.destination);
+
+                    const currentTime = audioCtx.currentTime;
+                    if (nextPlayTime < currentTime) {
+                        nextPlayTime = currentTime;
+                    }
+                    source.start(nextPlayTime);
+                    nextPlayTime += audioBuffer.duration;
+                } catch (err) {
+                    console.error("Audio playback error:", err);
+                }
+            }
+
         };
 
         // --- Interactive Per-Digit VFO Formatter ---

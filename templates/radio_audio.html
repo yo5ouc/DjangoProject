@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Station Audio Stream - {{ callsign }}</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #212529; color: #fff; text-align: center; padding: 20px; }
+        .audio-box { background: #343a40; max-width: 400px; margin: 0 auto; border-radius: 8px; border: 2px solid #495057; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .audio-btn { background: #28a745; border: none; border-radius: 4px; color: white; padding: 12px 24px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; margin-top: 15px; transition: background 0.2s; }
+        .audio-btn.active { background: #dc3545; }
+        .audio-btn:hover { opacity: 0.9; }
+        .status-text { font-family: monospace; font-size: 13px; color: #adb5bd; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="audio-box">
+        <h3>Station Audio Gateway</h3>
+        <p class="status-text">Status: <span id="audio-stream-status" style="color: #ff5252;">Disconnected</span></p>
+
+        <!-- Audio Playback Activation Button (Required for Browser Autoplay Policies) -->
+        <button id="toggle-audio-btn" class="audio-btn" onclick="toggleAudioStream()">Enable Audio Stream</button>
+    </div>
+
+    <script>
+        const stationId = "{{ station_id }}";
+        const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${socketProtocol}//${window.location.host}/ws/radio/${stationId}/`;
+
+        let audioSocket = null;
+        let audioCtx = null;
+        let nextPlayTime = 0;
+        let isAudioActive = false;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 8000 });
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleAudioStream() {
+            isAudioActive = !isAudioActive;
+            const btn = document.getElementById('toggle-audio-btn');
+            const statusEl = document.getElementById('audio-stream-status');
+
+            if (isAudioActive) {
+                initAudioContext();
+                btn.innerText = "Disable Audio Stream";
+                btn.classList.add('active');
+                statusEl.innerText = "Listening...";
+                statusEl.style.color = "#4caf50";
+            } else {
+                btn.innerText = "Enable Audio Stream";
+                btn.classList.remove('active');
+                statusEl.innerText = "Muted / Disconnected";
+                statusEl.style.color = "#ff5252";
+            }
+        }
+
+        // Connect to the station WebSocket channel
+        audioSocket = new WebSocket(wsUrl);
+
+        audioSocket.onopen = () => {
+            console.log(`Connected to audio channel for station: ${stationId}`);
+        };
+
+        audioSocket.onclose = () => {
+            console.warn("Audio WebSocket disconnected.");
+            document.getElementById('audio-stream-status').innerText = "Socket Disconnected";
+            document.getElementById('audio-stream-status').style.color = "#ff5252";
+        };
+
+        audioSocket.onmessage = (e) => {
+            if (!isAudioActive) return;
+
+            const data = JSON.parse(e.data);
+
+            // Handle incoming RX audio chunk from the bridge[cite: 3]
+            if (data.source === "audio_rx" && data.payload) {
+                try {
+                    const binaryString = atob(data.payload);
+                    const len = binaryString.length;
+                    const bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    // Convert 16-bit PCM to Float32Array for Web Audio API[cite: 3]
+                    const int16Data = new Int16Array(bytes.buffer);
+                    const float32Data = new Float32Array(int16Data.length);
+                    for (let i = 0; i < int16Data.length; i++) {
+                        float32Data[i] = int16Data[i] / 32768.0;
+                    }
+
+                    const audioBuffer = audioCtx.createBuffer(1, float32Data.length, 8000);
+                    audioBuffer.getChannelData(0).set(float32Data);
+
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(audioCtx.destination);
+
+                    const currentTime = audioCtx.currentTime;
+                    if (nextPlayTime < currentTime) {
+                        nextPlayTime = currentTime;
+                    }
+                    source.start(nextPlayTime);
+                    nextPlayTime += audioBuffer.duration;
+                } catch (err) {
+                    console.error("Error processing incoming audio frame:", err);
+                }
+            }
+        };
+    </script>
+</body>
+</html>
