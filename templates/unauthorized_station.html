@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Unauthorized Station Access</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #212529; color: #fff; text-align: center; padding: 50px; }
+        .error-box { background: #343a40; max-width: 500px; margin: 0 auto; border-radius: 8px; border: 2px solid #dc3545; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .btn { display: inline-block; background: #007bff; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; margin-top: 20px; font-weight: bold; }
+        .btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h2 style="color: #ff5252;">Access Denied</h2>
+        <p>User <strong>{{ username }}</strong> is not authorized to access station <strong>{{ station_callsign }}</strong>.</p>
+        <a href="{% url 'station_directory' %}" class="btn">&larr; Back to Station Directory</a>
+    </div>
+</body>
+</html>
