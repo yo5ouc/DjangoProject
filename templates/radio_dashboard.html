@@ -72,9 +72,32 @@
         .band-pill:hover { background: #6c757d; color: white; }
 
         /* ==========================================================================
-           4. OPERATING MODES (LSB, USB, CW, FM, etc.)
+           4. OPERATING MODES (LSB, USB, CW, FM, etc.) & BRIDGE STATUS BADGE
            ========================================================================== */
-        .mode-row { display: flex; gap: 6px; justify-content: center; background: #ffffff; padding: 8px; border-radius: 6px; margin-bottom: 15px; }
+        .mode-row { display: flex; gap: 6px; justify-content: center; align-items: center; background: #ffffff; padding: 8px; border-radius: 6px; margin-bottom: 15px; }
+        .bridge-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border-radius: 4px;
+            background-color: #2b1d1d;
+            color: #ff5252;
+            border: 1px solid #ff5252;
+            margin-right: 6px;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        .bridge-badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #ff5252;
+            transition: background-color 0.2s ease;
+        }
         .mode-btn { background: #e9ecef; border: 1px solid #ced4da; border-radius: 4px; padding: 4px 12px; font-weight: bold; color: #495057; cursor: pointer; }
         .mode-btn.active { background: #6c757d; color: white; }
 
@@ -195,8 +218,14 @@
 
     <!-- Main Transceiver Body -->
     <div class="rig-body">
-        <!-- Operating Mode Bar -->
+        <!-- Operating Mode Bar with Integrated Bridge Status -->
         <div class="mode-row">
+            <!-- Rig Bridge Connection Status Badge -->
+            <span id="bridge-status-badge" class="bridge-badge">
+                <span id="bridge-status-dot" class="bridge-badge-dot"></span>
+                <span id="bridge-status-text">Not connected</span>
+            </span>
+
             <button class="mode-btn active" id="mode-LSB" onclick="setMode('LSB')">LSB</button>
             <button class="mode-btn" id="mode-USB" onclick="setMode('USB')">USB</button>
             <button class="mode-btn" id="mode-AM" onclick="setMode('AM')">AM</button>
@@ -339,6 +368,38 @@
         let isWebTXLocked = false;
         let currentPwrSetting = 50;
 
+        let bridgeWatchdog = null;
+
+        function resetBridgeWatchdog() {
+            if (bridgeWatchdog) clearTimeout(bridgeWatchdog);
+            // If no telemetry or ping is received for 3.5 seconds, mark as Not connected
+            bridgeWatchdog = setTimeout(() => {
+                updateBridgeStatus(false);
+            }, 3500);
+        }
+
+        function updateBridgeStatus(isConnected) {
+            const badge = document.getElementById("bridge-status-badge");
+            const dot = document.getElementById("bridge-status-dot");
+            const text = document.getElementById("bridge-status-text");
+
+            if (!badge || !dot || !text) return;
+
+            if (isConnected) {
+                text.innerText = "Connected";
+                badge.style.backgroundColor = "#1b2e1e";
+                badge.style.color = "#4caf50";
+                badge.style.borderColor = "#4caf50";
+                dot.style.backgroundColor = "#4caf50";
+            } else {
+                text.innerText = "Not connected";
+                badge.style.backgroundColor = "#2b1d1d";
+                badge.style.color = "#ff5252";
+                badge.style.borderColor = "#ff5252";
+                dot.style.backgroundColor = "#ff5252";
+            }
+        }
+
         // Injected dynamically by Django views
         const stationId = "{{ station_id }}";
 
@@ -411,11 +472,25 @@
             console.warn(`Disconnected from station channel: ${stationId}`);
             const dot = document.getElementById('ws-status-dot');
             if (dot) dot.classList.add('disconnected');
+            if (bridgeWatchdog) clearTimeout(bridgeWatchdog);
+            updateBridgeStatus(false);
         };
 
         rigSocket.onmessage = (e) => {
             const data = JSON.parse(e.data);
+
+            // 1. Explicit bridge connection message from Django
+            if (data.type === "bridge_status") {
+                if (!data.connected && bridgeWatchdog) clearTimeout(bridgeWatchdog);
+                updateBridgeStatus(data.connected);
+                return;
+            }
+
+            // 2. Incoming Telemetry stream from the rig bridge
             if (data.source === "bridge") {
+                updateBridgeStatus(true);
+                resetBridgeWatchdog();
+
                 const txInd = document.getElementById('badge-tx-rx');
                 const pttBtn = document.getElementById('ptt-trigger');
                 const smeterBar = document.getElementById('smeter-fill');
