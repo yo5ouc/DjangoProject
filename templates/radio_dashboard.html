@@ -340,11 +340,15 @@
         </div>
 
         <!-- Compact Audio Control Panel -->
-        <div class="card bg-dark text-white p-3 mb-3" style="max-width: 320px; border: 1px solid #495057; border-radius: 8px;">
+        <div class="card bg-dark text-white p-3 mb-3" style="max-width: 320px; border: 1px solid #495057; border-radius: 8px; margin: 0 auto 15px auto;">
             <h5 class="card-title mb-2" style="font-size: 16px;">Audio Gateway</h5>
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="font-monospace text-muted" id="audio-stream-status" style="font-size: 12px; color: #ff5252 !important;">Muted</span>
                 <button id="toggle-audio-btn" class="btn btn-sm btn-success" onclick="toggleAudioStream()">Enable Audio</button>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="font-monospace text-muted" style="font-size: 12px; color: #adb5bd;">Microphone</span>
+                <button id="toggle-mic-btn" class="btn btn-sm btn-success" onclick="toggleMicrophone()">Enable Mic</button>
             </div>
         </div>
 
@@ -378,13 +382,17 @@
         let activeBandName = "80m";
         let activeRadioMode = "LSB";
         let isWebTXLocked = false;
-        let currentPwrSetting = 50;
+        let currentPwrSetting = 5;
 
         let bridgeWatchdog = null;
 
         let audioCtx = null;
         let nextPlayTime = 0;
         let isAudioActive = false;
+
+        let mediaStream = null;
+        let audioProcessor = null;
+        let isMicActive = false;
 
         function initAudioContext() {
             if (!audioCtx) {
@@ -411,6 +419,59 @@
                 btn.className = "btn btn-sm btn-success";
                 statusEl.innerText = "Muted";
                 statusEl.style.color = "#ff5252 !important";
+            }
+        }
+
+        async function toggleMicrophone() {
+            isMicActive = !isMicActive;
+            const micBtn = document.getElementById('toggle-mic-btn');
+
+            if (isMicActive) {
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        audio: { sampleRate: 48000, channelCount: 1, echoCancellation: true, noiseSuppression: true }
+                    });
+
+                    initAudioContext();
+                    const source = audioCtx.createMediaStreamSource(mediaStream);
+
+                    audioProcessor = audioCtx.createScriptProcessor(2048, 1, 1);
+
+                    audioProcessor.onaudioprocess = (e) => {
+                        if (!isMicActive || rigSocket.readyState !== WebSocket.OPEN) return;
+
+                        const inputData = e.inputBuffer.getChannelData(0);
+                        const int16Data = new Int16Array(inputData.length);
+                        for (let i = 0; i < inputData.length; i++) {
+                            let s = Math.max(-1, Math.min(1, inputData[i]));
+                            int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                        }
+
+                        const base64Payload = btoa(String.fromCharCode.apply(null, new Uint8Array(int16Data.buffer)));
+                        rigSocket.send(JSON.stringify({
+                            source: "audio_tx",
+                            payload: base64Payload
+                        }));
+                    };
+
+                    source.connect(audioProcessor);
+                    audioProcessor.connect(audioCtx.destination);
+
+                    micBtn.innerText = "Disable Mic";
+                    micBtn.className = "btn btn-sm btn-danger";
+                } catch (err) {
+                    console.error("Microphone access denied or error:", err);
+                    isMicActive = false;
+                }
+            } else {
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                }
+                if (audioProcessor) {
+                    audioProcessor.disconnect();
+                }
+                micBtn.innerText = "Enable Mic";
+                micBtn.className = "btn btn-sm btn-success";
             }
         }
 
