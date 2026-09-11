@@ -771,8 +771,7 @@
             const vfoElem = document.getElementById('vfo-a-display');
             // Show shifted TX frequency if transmitting with offset, otherwise show RX listening frequency
             const displayFreq = isWebTXLocked ? getActiveTxFrequency() : currentFreqHz;
-            vfoElem.innerHTML = formatInteractiveFrequency(currentFreqHz, true);
-
+            vfoElem.innerHTML = formatInteractiveFrequency(displayFreq, true);
             const vfoSubElem = document.getElementById('vfo-b-display');
             vfoSubElem.innerHTML = formatInteractiveFrequency(vfoBFreqHz, false);
         }
