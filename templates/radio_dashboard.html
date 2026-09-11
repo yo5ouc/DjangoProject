@@ -72,7 +72,7 @@
         .band-pill:hover { background: #6c757d; color: white; }
 
         /* ==========================================================================
-           4. OPERATING MODES (LSB, USB, CW, FM, etc.) & BRIDGE STATUS BADGE
+           4. OPERATING MODES & BRIDGE STATUS BADGE
            ========================================================================== */
         .mode-row { display: flex; gap: 6px; justify-content: center; align-items: center; background: #ffffff; padding: 8px; border-radius: 6px; margin-bottom: 15px; }
         .bridge-badge {
@@ -102,7 +102,7 @@
         .mode-btn.active { background: #6c757d; color: white; }
 
         /* ==========================================================================
-           5. METERS & TELEMETRY BARS (SIG, PWR, SWR, ALC)
+           5. METERS & TELEMETRY BARS
            ========================================================================== */
         .meter-panel { background: #ffffff; border-radius: 6px; padding: 12px 16px; text-align: left; font-family: monospace; font-size: 11px; font-weight: bold; margin-bottom: 15px; position: relative; }
         .meter-track { background: #e9ecef; width: 100%; height: 6px; border-radius: 2px; position: relative; margin-top: 2px; overflow: hidden; }
@@ -123,7 +123,6 @@
         .vfo-digits { font-size: 42px; font-family: monospace; font-weight: bold; letter-spacing: 2px; color: #212529; flex-grow: 1; text-align: center; user-select: none; }
         .vfo-digits .small-digits { font-size: 0.65em; vertical-align: baseline; opacity: 0.85; }
 
-        /* Per-Digit Wheel Tuning & Hover Indicator */
         .tune-digit {
             cursor: ns-resize;
             display: inline-block;
@@ -136,7 +135,6 @@
 
         .vfo-dial-wheel { background: #495057; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #212529; cursor: pointer; margin-right: 15px; }
 
-        /* PTT Button: Green for RX, Red for TX */
         .ptt-btn {
             background: #28a745;
             border: 2px solid #1e7e34;
@@ -167,25 +165,59 @@
         .vfo-sub-digits .small-digits { font-size: 0.7em; vertical-align: baseline; opacity: 0.85; }
 
         /* ==========================================================================
-           9. STATUS BADGES & DSP / PREAMP FILTERS
+           9. STATUS BADGES & DSP FILTERS
            ========================================================================== */
         .status-badge-row { display: flex; gap: 8px; margin-bottom: 15px; font-family: monospace; font-size: 11px; font-weight: bold; }
         .status-badge { background: #ffffff; border: 1px solid #333; border-radius: 4px; padding: 2px 6px; }
         .status-badge.highlight { background: #000000; color: #ffffff; }
+        .status-badge.rpt-active { background: #0d6efd; color: #ffffff; }
+
+        /* Quick Controls Row (Audio Gateway + Repeater Offset) */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: stretch;
+            margin-bottom: 15px;
+        }
+        .control-card {
+            background: #212529;
+            color: #ffffff;
+            padding: 12px 16px;
+            border: 1px solid #495057;
+            border-radius: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .rpt-toggle-btn {
+            min-width: 90px;
+            padding: 8px 14px;
+            cursor: pointer;
+            background-color: #198754;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            transition: background-color 0.2s ease;
+        }
+
         .filter-row { display: flex; gap: 6px; background: #ffffff; padding: 6px; border-radius: 6px; margin-bottom: 15px; justify-content: space-between; flex-wrap: wrap; }
         .filter-lbl { font-size: 10px; color: #6c757d; font-weight: bold; width: 100%; text-align: left; margin-left: 5px; text-transform: uppercase; }
         .filter-btn { background: #ced4da; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; font-weight: bold; color: #495057; cursor: pointer; flex-grow: 1; }
         .filter-btn.active { background: #6c757d; color: white; }
 
         /* ==========================================================================
-           10. BOTTOM ACTIONS (A/B, A=B, SPLIT)
+           10. BOTTOM ACTIONS
            ========================================================================== */
         .bottom-action-row { display: flex; gap: 8px; justify-content: center; }
         .action-btn { background: #ced4da; border: 1px solid #adb5bd; border-radius: 4px; padding: 5px 15px; font-size: 13px; font-weight: bold; color: #495057; cursor: pointer; }
     </style>
 </head>
 <body>
-    <!-- Top Multi-User Station Header Bar -->
     <div class="station-header-bar">
         <div class="station-badge">
             <span class="status-dot" id="ws-status-dot" title="WebSocket Link Status"></span>
@@ -201,7 +233,6 @@
         </div>
     </div>
 
-    <!-- Top Band Selection Row -->
     <div class="top-band-row">
         <div class="band-pill" onclick="selectBand('160m', 1800000)">160m</div>
         <div class="band-pill" onclick="selectBand('80m', 3573000)">80m</div>
@@ -215,15 +246,12 @@
         <div class="band-pill" onclick="selectBand('10m', 28074000)">10m</div>
         <div class="band-pill" onclick="selectBand('6m', 50313000)">6m</div>
         <div class="band-pill">AIR</div>
-        <div class="band-pill" onclick="selectBand('2m', 144200000)">2m</div>
-        <div class="band-pill" onclick="selectBand('70cm', 432200000)">70cm</div>
+        <div class="band-pill" onclick="selectBand('2m', 145600000)">2m</div>
+        <div class="band-pill" onclick="selectBand('70cm', 438600000)">70cm</div>
     </div>
 
-    <!-- Main Transceiver Body -->
     <div class="rig-body">
-        <!-- Operating Mode Bar with Integrated Bridge Status -->
         <div class="mode-row">
-            <!-- Rig Bridge Connection Status Badge -->
             <span id="bridge-status-badge" class="bridge-badge">
                 <span id="bridge-status-dot" class="bridge-badge-dot"></span>
                 <span id="bridge-status-text">Not connected</span>
@@ -239,9 +267,7 @@
             <button class="mode-btn" id="mode-DIGI" onclick="setMode('DIGI')">DIGI</button>
         </div>
 
-        <!-- Real-Time Dynamic Meters Panel -->
         <div class="meter-panel">
-            <!-- Line 1: S-Meter (SIG) -->
             <div style="margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 3px;">
                     <span>SIG 1</span>
@@ -256,9 +282,7 @@
                 <div class="meter-track"><div id="smeter-fill" class="meter-fill" style="background: #007bff; width: 0%;"></div></div>
             </div>
 
-            <!-- Line 2: TX Telemetry (PWR, SWR, ALC) -->
             <div style="display: flex; gap: 24px; width: 100%;">
-                <!-- PWR Column -->
                 <div style="flex: 1;">
                     <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 3px;">
                         <span>PWR 0</span>
@@ -270,7 +294,6 @@
                     <div class="meter-track"><div id="power-fill" class="meter-fill" style="background: #007bff; width: 0%;"></div></div>
                 </div>
 
-                <!-- SWR Column -->
                 <div style="flex: 1;">
                     <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 3px;">
                         <span>SWR 1.0</span>
@@ -281,7 +304,6 @@
                     <div class="meter-track"><div id="swr-fill" class="meter-fill" style="background: #007bff; width: 0%;"></div></div>
                 </div>
 
-                <!-- ALC Column -->
                 <div style="flex: 1;">
                     <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 3px;">
                         <span>ALC 0</span>
@@ -294,14 +316,12 @@
             </div>
         </div>
 
-        <!-- RF Power Output Slider -->
         <div class="slider-panel">
             <span>RF POWER OUTPUT LIMIT</span>
             <input type="range" id="pwrSlider" class="pwr-slider" min="5" max="100" value="50" oninput="changePwrLimit(this.value)">
             <span id="pwr-display">50 Watts</span>
         </div>
 
-        <!-- Main VFO-A Box -->
         <div class="vfo-main-box">
             <button class="ptt-btn" id="ptt-trigger" onclick="togglePTTLock()">PTT</button>
             <div class="vfo-badge">A</div>
@@ -313,7 +333,6 @@
             </div>
         </div>
 
-        <!-- Sub VFO-B Box -->
         <div class="vfo-sub-box">
             <div style="display:flex; gap:15px; align-items:center;">
                 <div class="vfo-badge" style="padding:2px 6px; font-size:12px;">B</div>
@@ -322,37 +341,45 @@
             <div style="display:flex; gap:6px;">
                 <select id="memory-select" style="padding:4px; border-radius:4px; font-weight:bold;">
                     <option>Recall Memory</option>
-                    <option value="14074000">Ch 1: 20m FT8</option>
-                    <option value="7074000">Ch 2: 40m FT8</option>
+                    <option value="145600000">R0: 145.600 MHz</option>
+                    <option value="145700000">R4: 145.700 MHz</option>
+                    <option value="438600000">RU1: 438.600 MHz</option>
                 </select>
                 <button class="tune-btn" style="padding:4px 12px; font-size:12px;" onclick="loadMemory()">SET</button>
             </div>
         </div>
 
-        <!-- Status Badges -->
         <div class="status-badge-row">
             <div class="status-badge highlight" id="badge-mode">LSB</div>
             <div class="status-badge">W</div>
             <div class="status-badge highlight" id="badge-tx-rx">RX</div>
+            <div class="status-badge" id="badge-shift">SIMP</div>
             <div style="flex-grow:1;"></div>
             <div class="status-badge highlight">COMP</div>
             <div class="status-badge highlight">AGC-A</div>
         </div>
 
-        <!-- Compact Audio Control Panel -->
-        <div class="card bg-dark text-white p-3 mb-3" style="max-width: 320px; border: 1px solid #495057; border-radius: 8px; margin: 0 auto 15px auto;">
-            <h5 class="card-title mb-2" style="font-size: 16px;">Audio Gateway</h5>
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="font-monospace text-muted" id="audio-stream-status" style="font-size: 12px; color: #ff5252 !important;">Muted</span>
-                <button id="toggle-audio-btn" class="btn btn-sm btn-success" onclick="toggleAudioStream()">Enable Audio</button>
+        <!-- Side-by-Side Audio Gateway & Repeater Offset Control -->
+        <div class="controls-row">
+            <div class="control-card" style="flex: 2;">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; text-align: left;">AUDIO GATEWAY</div>
+                <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between;">
+                    <div style="text-align: left;">
+                        <span id="audio-stream-status" style="font-size: 11px; font-family: monospace; color: #ff5252;">RX Muted</span>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button id="toggle-audio-btn" class="tune-btn" style="padding: 5px 10px; font-size: 12px;" onclick="toggleAudioStream()">Enable RX</button>
+                        <button id="toggle-mic-btn" class="tune-btn" style="padding: 5px 10px; font-size: 12px;" onclick="toggleMicrophone()">Enable Mic</button>
+                    </div>
+                </div>
             </div>
-            <div class="d-flex align-items-center justify-content-between">
-                <span class="font-monospace text-muted" style="font-size: 12px; color: #adb5bd;">Microphone</span>
-                <button id="toggle-mic-btn" class="btn btn-sm btn-success" onclick="toggleMicrophone()">Enable Mic</button>
+
+            <div class="control-card" style="flex: 1; align-items: center;">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">RPT-OFFSET</div>
+                <button id="rptButton" class="rpt-toggle-btn" onclick="toggleRptOffset()">Simplex</button>
             </div>
         </div>
 
-        <!-- Filter & Processing Modules -->
         <div class="filter-row">
             <div class="filter-lbl">Filter & Processing Modules</div>
             <button class="filter-btn active">Wide</button>
@@ -367,7 +394,6 @@
             <button class="filter-btn">P.Amp</button>
         </div>
 
-        <!-- Bottom Action Controls -->
         <div class="bottom-action-row">
             <button class="action-btn" onclick="swapVFO()">A / B</button>
             <button class="action-btn" onclick="copyVFO()">A = B</button>
@@ -375,21 +401,60 @@
         </div>
     </div>
 
-    <!-- Client-Side Controller Logic -->
     <script>
-        let currentFreqHz = 3573000;
-        let vfoBFreqHz = 145500000;
-        let activeBandName = "80m";
-        let activeRadioMode = "LSB";
+        let currentFreqHz = 145600000;
+        let vfoBFreqHz = 438600000;
+        let activeBandName = "2m";
+        let activeRadioMode = "FM";
         let isWebTXLocked = false;
-        let currentPwrSetting = 5;
+        let currentPwrSetting = 50;
+
+        // --- Repeater Shift Configuration ---
+        const rptStates = ["Simplex", "-", "+"];
+        const rptColors = ["#198754", "#dc3545", "#0d6efd"]; // green, red, blue
+        let currentRptIndex = 0;
+
+        function getBandOffset(hz) {
+            if (hz >= 144000000 && hz <= 146000000) {
+                return 600000; // Standard 2m 600 kHz offset
+            } else if (hz >= 430000000 && hz <= 440000000) {
+                return 7600000; // Standard 70cm 7.6 MHz offset
+            }
+            return 0;
+        }
+
+        function getActiveTxFrequency() {
+            const shiftMode = rptStates[currentRptIndex];
+            const offset = getBandOffset(currentFreqHz);
+            if (shiftMode === "-") return currentFreqHz - offset;
+            if (shiftMode === "+") return currentFreqHz + offset;
+            return currentFreqHz;
+        }
+
+        function toggleRptOffset() {
+            currentRptIndex = (currentRptIndex + 1) % rptStates.length;
+            const btn = document.getElementById("rptButton");
+            const badge = document.getElementById("badge-shift");
+
+            btn.innerText = rptStates[currentRptIndex];
+            btn.style.backgroundColor = rptColors[currentRptIndex];
+
+            if (currentRptIndex === 0) {
+                badge.innerText = "SIMP";
+                badge.classList.remove("rpt-active");
+            } else {
+                badge.innerText = `RPT ${rptStates[currentRptIndex]}`;
+                badge.classList.add("rpt-active");
+            }
+
+            // Transmit state update to rig bridge
+            submitRigTelemetry();
+        }
 
         let bridgeWatchdog = null;
-
         let audioCtx = null;
         let nextPlayTime = 0;
         let isAudioActive = false;
-
         let mediaStream = null;
         let audioProcessor = null;
         let isMicActive = false;
@@ -410,15 +475,15 @@
 
             if (isAudioActive) {
                 initAudioContext();
-                btn.innerText = "Disable Audio";
-                btn.className = "btn btn-sm btn-danger";
-                statusEl.innerText = "Streaming";
-                statusEl.style.color = "#4caf50 !important";
+                btn.innerText = "Disable RX";
+                btn.classList.add('active');
+                statusEl.innerText = "RX Live";
+                statusEl.style.color = "#4caf50";
             } else {
-                btn.innerText = "Enable Audio";
-                btn.className = "btn btn-sm btn-success";
-                statusEl.innerText = "Muted";
-                statusEl.style.color = "#ff5252 !important";
+                btn.innerText = "Enable RX";
+                btn.classList.remove('active');
+                statusEl.innerText = "RX Muted";
+                statusEl.style.color = "#ff5252";
             }
         }
 
@@ -434,7 +499,6 @@
 
                     initAudioContext();
                     const source = audioCtx.createMediaStreamSource(mediaStream);
-
                     audioProcessor = audioCtx.createScriptProcessor(2048, 1, 1);
 
                     audioProcessor.onaudioprocess = (e) => {
@@ -458,36 +522,28 @@
                     audioProcessor.connect(audioCtx.destination);
 
                     micBtn.innerText = "Disable Mic";
-                    micBtn.className = "btn btn-sm btn-danger";
+                    micBtn.classList.add('active');
                 } catch (err) {
-                    console.error("Microphone access denied or error:", err);
+                    console.error("Microphone access denied:", err);
                     isMicActive = false;
                 }
             } else {
-                if (mediaStream) {
-                    mediaStream.getTracks().forEach(track => track.stop());
-                }
-                if (audioProcessor) {
-                    audioProcessor.disconnect();
-                }
+                if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+                if (audioProcessor) audioProcessor.disconnect();
                 micBtn.innerText = "Enable Mic";
-                micBtn.className = "btn btn-sm btn-success";
+                micBtn.classList.remove('active');
             }
         }
 
         function resetBridgeWatchdog() {
             if (bridgeWatchdog) clearTimeout(bridgeWatchdog);
-            // If no telemetry or ping is received for 3.5 seconds, mark as Not connected
-            bridgeWatchdog = setTimeout(() => {
-                updateBridgeStatus(false);
-            }, 3500);
+            bridgeWatchdog = setTimeout(() => { updateBridgeStatus(false); }, 3500);
         }
 
         function updateBridgeStatus(isConnected) {
             const badge = document.getElementById("bridge-status-badge");
             const dot = document.getElementById("bridge-status-dot");
             const text = document.getElementById("bridge-status-text");
-
             if (!badge || !dot || !text) return;
 
             if (isConnected) {
@@ -505,76 +561,17 @@
             }
         }
 
-        // Injected dynamically by Django views
         const stationId = "{{ station_id }}";
-
-        // --- Amateur Radio Band Plan Designations ---
-        const BAND_PLAN_SEGMENTS = [
-            { start: 1800000, end: 1838000, type: "CW" },
-            { start: 1838000, end: 1843000, type: "DIGI" },
-            { start: 1843000, end: 2000000, type: "PHONE" },
-            { start: 3500000, end: 3570000, type: "CW" },
-            { start: 3570000, end: 3600000, type: "DIGI" },
-            { start: 3600000, end: 3800000, type: "PHONE" },
-            { start: 5351500, end: 5354000, type: "CW" },
-            { start: 5354000, end: 5366000, type: "DIGI" },
-            { start: 5366000, end: 5366500, type: "PHONE" },
-            { start: 7000000, end: 7040000, type: "CW" },
-            { start: 7040000, end: 7060000, type: "DIGI" },
-            { start: 7060000, end: 7200000, type: "PHONE" },
-            { start: 10100000, end: 10130000, type: "CW" },
-            { start: 10130000, end: 10150000, type: "DIGI" },
-            { start: 14000000, end: 14070000, type: "CW" },
-            { start: 14070000, end: 14101000, type: "DIGI" },
-            { start: 14101000, end: 14350000, type: "PHONE" },
-            { start: 18068000, end: 18095000, type: "CW" },
-            { start: 18095000, end: 18120000, type: "DIGI" },
-            { start: 18120000, end: 18168000, type: "PHONE" },
-            { start: 21000000, end: 21070000, type: "CW" },
-            { start: 21070000, end: 21120000, type: "DIGI" },
-            { start: 21150000, end: 21450000, type: "PHONE" },
-            { start: 24890000, end: 24915000, type: "CW" },
-            { start: 24915000, end: 24930000, type: "DIGI" },
-            { start: 24930000, end: 24990000, type: "PHONE" },
-            { start: 28000000, end: 28070000, type: "CW" },
-            { start: 28070000, end: 28190000, type: "DIGI" },
-            { start: 28200000, end: 29700000, type: "PHONE" },
-            { start: 50000000, end: 50100000, type: "CW" },
-            { start: 50310000, end: 50330000, type: "DIGI" },
-            { start: 50100000, end: 54000000, type: "PHONE" },
-            { start: 144000000, end: 144150000, type: "CW" },
-            { start: 144150000, end: 144200000, type: "DIGI" },
-            { start: 144200000, end: 146000000, type: "PHONE" },
-            { start: 432000000, end: 432100000, type: "CW" },
-            { start: 432100000, end: 432200000, type: "DIGI" },
-            { start: 430000000, end: 440000000, type: "PHONE" }
-        ];
-
-        function getDesignatedColor(hz) {
-            const match = BAND_PLAN_SEGMENTS.find(seg => hz >= seg.start && hz <= seg.end);
-            if (!match) return "#212529";
-
-            switch (match.type) {
-                case "DIGI": return "#198754";
-                case "CW":   return "#d63384";
-                case "PHONE":
-                default:     return "#212529";
-            }
-        }
-
-        // --- Multi-Tenant Parameterized WebSocket Telemetry Pipeline ---
         const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${socketProtocol}//${window.location.host}/ws/radio/${stationId}/`;
         const rigSocket = new WebSocket(wsUrl);
 
         rigSocket.onopen = () => {
-            console.log(`Connected to isolated channel for station: ${stationId}`);
             const dot = document.getElementById('ws-status-dot');
             if (dot) dot.classList.remove('disconnected');
         };
 
         rigSocket.onclose = () => {
-            console.warn(`Disconnected from station channel: ${stationId}`);
             const dot = document.getElementById('ws-status-dot');
             if (dot) dot.classList.add('disconnected');
             if (bridgeWatchdog) clearTimeout(bridgeWatchdog);
@@ -584,14 +581,12 @@
         rigSocket.onmessage = (e) => {
             const data = JSON.parse(e.data);
 
-            // 1. Explicit bridge connection message from Django
             if (data.type === "bridge_status") {
                 if (!data.connected && bridgeWatchdog) clearTimeout(bridgeWatchdog);
                 updateBridgeStatus(data.connected);
                 return;
             }
 
-            // 2. Incoming Telemetry stream from the rig bridge
             if (data.source === "bridge") {
                 updateBridgeStatus(true);
                 resetBridgeWatchdog();
@@ -636,7 +631,8 @@
                     alcBar.style.width = '0%';
                 }
 
-                if (data.freq_hz && data.freq_hz !== currentFreqHz) {
+                // Update VFO only if RX frequency changed externally while not transmitting
+                if (data.freq_hz && !isWebTXLocked && !data.is_transmitting && data.freq_hz !== currentFreqHz) {
                     currentFreqHz = data.freq_hz;
                     updateInterfaceDisplay();
                 }
@@ -647,15 +643,11 @@
                     const binaryString = atob(data.payload);
                     const len = binaryString.length;
                     const bytes = new Uint8Array(len);
-                    for (let i = 0; i < len; i++) {
-                        bytes[i] = binaryString.charCodeAt(i);
-                    }
+                    for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
 
                     const int16Data = new Int16Array(bytes.buffer);
                     const float32Data = new Float32Array(int16Data.length);
-                    for (let i = 0; i < int16Data.length; i++) {
-                        float32Data[i] = int16Data[i] / 32768.0;
-                    }
+                    for (let i = 0; i < int16Data.length; i++) float32Data[i] = int16Data[i] / 32768.0;
 
                     const audioBuffer = audioCtx.createBuffer(1, float32Data.length, 48000);
                     audioBuffer.getChannelData(0).set(float32Data);
@@ -665,27 +657,21 @@
                     source.connect(audioCtx.destination);
 
                     const currentTime = audioCtx.currentTime;
-                    if (nextPlayTime < currentTime) {
-                        nextPlayTime = currentTime;
-                    }
+                    if (nextPlayTime < currentTime) nextPlayTime = currentTime;
                     source.start(nextPlayTime);
                     nextPlayTime += audioBuffer.duration;
                 } catch (err) {
                     console.error("Audio playback error:", err);
                 }
             }
-
         };
 
-        // --- Interactive Per-Digit VFO Formatter ---
         function formatInteractiveFrequency(hz, isVFO_A = true) {
             let mhz = (hz / 1000000).toFixed(5);
             let [whole, decimals] = mhz.split('.');
             let wholePadded = whole.padStart(2, '0');
-
             let vfoTag = isVFO_A ? "'A'" : "'B'";
 
-            // Digits before dot (100MHz / 10MHz / 1MHz)
             let wholeHtml = "";
             let len = wholePadded.length;
             for (let i = 0; i < len; i++) {
@@ -694,24 +680,18 @@
                 wholeHtml += `<span class="tune-digit" onwheel="handleDigitWheel(event, ${weight}, ${vfoTag})">${char}</span>`;
             }
 
-            // First 3 decimals (100kHz, 10kHz, 1kHz)
             let k100 = `<span class="tune-digit" onwheel="handleDigitWheel(event, 100000, ${vfoTag})">${decimals[0]}</span>`;
             let k10  = `<span class="tune-digit" onwheel="handleDigitWheel(event, 10000, ${vfoTag})">${decimals[1]}</span>`;
             let k1   = `<span class="tune-digit" onwheel="handleDigitWheel(event, 1000, ${vfoTag})">${decimals[2]}</span>`;
-
-            // Last 2 decimals in smaller font (100Hz, 10Hz)
             let h100 = `<span class="tune-digit" onwheel="handleDigitWheel(event, 100, ${vfoTag})">${decimals[3]}</span>`;
             let h10  = `<span class="tune-digit" onwheel="handleDigitWheel(event, 10, ${vfoTag})">${decimals[4]}</span>`;
 
             return `${wholeHtml}.${k100}${k10}${k1}.<span class="small-digits">${h100}${h10}</span>`;
         }
 
-        // --- Mouse Wheel Per-Digit Step Listener ---
         function handleDigitWheel(event, weightHz, vfoTarget) {
             event.preventDefault();
             event.stopPropagation();
-
-            // Scrolling UP (deltaY < 0) increments, DOWN decrements
             let step = event.deltaY < 0 ? weightHz : -weightHz;
 
             if (vfoTarget === 'A') {
@@ -789,28 +769,25 @@
         function updateInterfaceDisplay() {
             const vfoElem = document.getElementById('vfo-a-display');
             vfoElem.innerHTML = formatInteractiveFrequency(currentFreqHz, true);
-            vfoElem.style.color = getDesignatedColor(currentFreqHz);
 
             const vfoSubElem = document.getElementById('vfo-b-display');
             vfoSubElem.innerHTML = formatInteractiveFrequency(vfoBFreqHz, false);
-            vfoSubElem.style.color = getDesignatedColor(vfoBFreqHz);
         }
 
         function submitRigTelemetry() {
             if (rigSocket.readyState === WebSocket.OPEN) {
-                let hexStr = String(currentFreqHz).padStart(8, '0') + "01";
                 rigSocket.send(JSON.stringify({
                     source: "web",
                     action: "cat_command",
-                    hex_code: hexStr,
                     freq_hz: currentFreqHz,
+                    tx_freq_hz: getActiveTxFrequency(),
+                    rpt_shift: rptStates[currentRptIndex],
                     force_tx: isWebTXLocked,
                     pwr_limit: currentPwrSetting
                 }));
             }
         }
 
-        // Initialize display and frequency colors on page load
         updateInterfaceDisplay();
     </script>
 </body>
